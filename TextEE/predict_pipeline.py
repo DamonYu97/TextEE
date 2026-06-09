@@ -36,7 +36,7 @@ def main():
     # ED predict 
     ed_predictions = ed_trainer.predict(ed_eval_data, **unknown_args)
 
-    if args.input_file:
+    if args.eae_model:
         eae_eval_data = convert_ED_to_EAE(ed_predictions, ed_eval_data)
     
         # load EAE trainer and model
