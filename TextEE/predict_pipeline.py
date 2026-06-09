@@ -11,7 +11,7 @@ def main():
     parser.add_argument('--input_file', required=True)
     parser.add_argument('--output_file', required=True)
     parser.add_argument('--ed_model', required=True)
-    parser.add_argument('--eae_model', required=True)
+    parser.add_argument('--eae_model', required=False)
     parser.add_argument('--gpu', type=int, default=0)
     args, unknown_args = parser.parse_known_args()
     unknown_args = parse_unknown_args(unknown_args)
@@ -35,22 +35,26 @@ def main():
 
     # ED predict 
     ed_predictions = ed_trainer.predict(ed_eval_data, **unknown_args)
-    eae_eval_data = convert_ED_to_EAE(ed_predictions, ed_eval_data)
+
+    if args.input_file:
+        eae_eval_data = convert_ED_to_EAE(ed_predictions, ed_eval_data)
     
-    # load EAE trainer and model
-    eae_config = load_config(os.path.join(args.eae_model, "config.json"))
-    eae_config.gpu_device = args.gpu
-    logger.info(f"\n{pprint.pformat(vars(eae_config), indent=4)}")
-    eae_trainer_class = TRAINER_MAP[(eae_config.model_type, eae_config.task)]
-    eae_trainer = eae_trainer_class(eae_config)
-    eae_trainer.load_model(checkpoint=args.eae_model)
+        # load EAE trainer and model
+        eae_config = load_config(os.path.join(args.eae_model, "config.json"))
+        eae_config.gpu_device = args.gpu
+        logger.info(f"\n{pprint.pformat(vars(eae_config), indent=4)}")
+        eae_trainer_class = TRAINER_MAP[(eae_config.model_type, eae_config.task)]
+        eae_trainer = eae_trainer_class(eae_config)
+        eae_trainer.load_model(checkpoint=args.eae_model)
     
-    # EAE predict 
-    eae_predictions = eae_trainer.predict(eae_eval_data, **unknown_args)
-    e2e_predictions = combine_ED_and_EAE_to_E2E(ed_predictions, eae_predictions)
+        # EAE predict 
+        eae_predictions = eae_trainer.predict(eae_eval_data, **unknown_args)
+        e2e_predictions = combine_ED_and_EAE_to_E2E(ed_predictions, eae_predictions)
     
-    # save predictions
-    save_predictions(args.output_file, e2e_predictions, ed_eval_data, eval_offset_map)
+        # save predictions
+        save_predictions(args.output_file, e2e_predictions, ed_eval_data, eval_offset_map)
+    else:
+        save_predictions(args.output_file, ed_predictions, ed_eval_data, eval_offset_map)
     
 if __name__ == "__main__":
     main()
