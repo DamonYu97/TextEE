@@ -5,6 +5,16 @@ import ipdb
 
 logger = logging.getLogger(__name__)
 
+
+def format_ED(predictions):
+    for prediction in predictions:
+      events = []
+      for trigger in prediction["triggers"]:
+        events.append({"trigger": trigger, "arguments": []})
+      prediction["events"] = events
+    return predictions
+
+
 def main():
     # configuration
     parser = ArgumentParser()
@@ -54,6 +64,7 @@ def main():
         # save predictions
         save_predictions(args.output_file, e2e_predictions, ed_eval_data, eval_offset_map)
     else:
+        format_ED(ed_predictions)
         save_predictions(args.output_file, ed_predictions, ed_eval_data, eval_offset_map)
     
 if __name__ == "__main__":
